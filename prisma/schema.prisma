@@ -1,0 +1,216 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RatePlanType {
+  FLEXIBLE
+  ADVANCE_PURCHASE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REFUND_REQUESTED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  HOTEL
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model Hotel {
+  id           String       @id @default(cuid())
+  slug         String       @unique
+  code         String       @unique // e.g. "UDR", "JAI"
+  name         String
+  city         String
+  state        String
+  kind         String       // "Palace hotel", "Heritage haveli", etc.
+  rating       Decimal      @db.Decimal(2, 1)
+  reviewsCount String
+  basePrice    Int          // In paise
+  badge        String?
+  tags         String[]     // ["Palaces & havelis", "Honeymoon"]
+  mapX         Float
+  mapY         Float
+  blurb        String
+  intro        String?
+  body         String?
+  address      String
+  nearPlaces   Json         // [["City Palace", "10 min"], ...]
+  airportDist  String
+  totalRooms   Int
+  images       HotelImage[]
+  rooms        RoomType[]
+  bookings     Booking[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model HotelImage {
+  id      String @id @default(cuid())
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  url     String
+  caption String
+  order   Int    @default(0)
+}
+
+model RoomType {
+  id           String           @id @default(cuid())
+  hotelId      String
+  hotel        Hotel            @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  code         String           // "palace", "junior", "maharani"
+  name         String
+  facts        String           // "40 m² · King or twin · Original jharokha window · Sleeps 3"
+  imageUrl     String
+  baseRate     Int              // Base rate in paise per night
+  maxGuests    Int              @default(3)
+  inventory    Int              // Default physical room count
+  ratePlans    RatePlan[]
+  dailyRates   DailyInventory[]
+  bookingRooms BookingRoom[]
+  holds        InventoryHold[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([hotelId, code])
+}
+
+model RatePlan {
+  id              String       @id @default(cuid())
+  roomTypeId      String
+  roomType        RoomType     @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  type            RatePlanType
+  name            String       // "Flexible · breakfast for two" vs "Advance purchase · breakfast for two"
+  policyText      String       // "Free cancellation up to 48 hours..."
+  discountPercent Int          @default(0) // 12 for advance purchase
+  isRefundable    Boolean      @default(true)
+}
+
+model DailyInventory {
+  id          String   @id @default(cuid())
+  roomTypeId  String
+  roomType    RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  totalRooms  Int
+  bookedRooms Int      @default(0)
+  heldRooms   Int      @default(0)
+  pricePaise  Int?
+
+  @@unique([roomTypeId, date])
+}
+
+model InventoryHold {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  holdToken  String   @unique
+  date       DateTime @db.Date
+  quantity   Int
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+model Booking {
+  id                String        @id @default(cuid())
+  reference         String        @unique // "TRH-UDR-48291"
+  hotelId           String
+  hotel             Hotel         @relation(fields: [hotelId], references: [id])
+  checkIn           DateTime      @db.Date
+  checkOut          DateTime      @db.Date
+  nights            Int
+  adults            Int
+  children          Int           @default(0)
+  guestTitle        String
+  guestFirstName    String
+  guestLastName     String
+  guestEmail        String
+  guestMobile       String
+  arrivalTime       String
+  guestNote         String?
+  subtotalPaise     Int
+  discountPaise     Int           @default(0)
+  addonTotalPaise   Int           @default(0)
+  gstPaise          Int
+  totalPaise        Int
+  status            BookingStatus @default(PENDING)
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(UNPAID)
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?       @unique
+  promoCodeId       String?
+  promoCode         PromoCode?    @relation(fields: [promoCodeId], references: [id])
+  rooms             BookingRoom[]
+  addons            BookingAddon[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model BookingRoom {
+  id           String       @id @default(cuid())
+  bookingId    String
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomTypeId   String
+  roomType     RoomType     @relation(fields: [roomTypeId], references: [id])
+  ratePlanType RatePlanType
+  quantity     Int
+  ratePaise    Int
+  gstPaise     Int
+}
+
+model Addon {
+  id          String         @id @default(cuid())
+  code        String         @unique // "boat", "dinner", "spa", "car"
+  name        String
+  description String
+  pricePaise  Int            // In paise (e.g. 300000 for ₹3,000)
+  imageUrl    String
+  gstRate     Decimal        @default(0.18) @db.Decimal(4, 2)
+  bookings    BookingAddon[]
+}
+
+model BookingAddon {
+  id         String  @id @default(cuid())
+  bookingId  String
+  booking    Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addonId    String
+  addon      Addon   @relation(fields: [addonId], references: [id])
+  pricePaise Int
+}
+
+model PromoCode {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  discountPercent   Int?
+  discountFlatPaise Int?
+  minNights         Int       @default(1)
+  validFrom         DateTime
+  validTo           DateTime
+  isActive          Boolean   @default(true)
+  bookings          Booking[]
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime @default(now())
+}
