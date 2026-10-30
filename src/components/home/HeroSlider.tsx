@@ -71,6 +71,7 @@ export function HeroSlider() {
   const [selectedHotel, setSelectedHotel] = useState("all");
   const [bookingError, setBookingError] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   // Auto rotation every 6.5 seconds
   useEffect(() => {
@@ -86,15 +87,18 @@ export function HeroSlider() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(diff) > 50) {
-      goToSlide(cur + (diff < 0 ? 1 : -1));
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+      goToSlide(cur + (diffX < 0 ? 1 : -1));
     }
     touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   const handleDesktopBookingSubmit = (e: React.FormEvent) => {
@@ -139,14 +143,14 @@ export function HeroSlider() {
     <section className="relative h-[clamp(640px,92vh,920px)] max-[900px]:h-auto overflow-hidden bg-[var(--forest)] text-[var(--ivory)]" aria-label="Featured hotels">
       {/* Visual Slider Stage */}
       <div
-        className="absolute inset-0 max-[900px]:relative max-[900px]:h-[clamp(500px,76vh,640px)]"
+        className="absolute inset-0 max-[900px]:relative max-[900px]:h-[clamp(500px,76vh,640px)] touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {SLIDES.map((s, idx) => (
           <div
             key={s.h}
-            className={`absolute inset-0 transition-opacity duration-1600 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-[1600ms] ease-in-out ${
               idx === cur ? "opacity-100 z-1" : "opacity-0 z-0 pointer-events-none"
             }`}
           >
@@ -165,20 +169,20 @@ export function HeroSlider() {
         <div className="scrim z-2 pointer-events-none" />
 
         {/* Hero Copy Overlay */}
-        <div className="absolute left-0 right-0 bottom-[190px] max-[900px]:bottom-[96px] z-3 flex justify-between items-end gap-10 px-[max(var(--gut),4vw)] max-[900px]:flex-col max-[900px]:items-stretch max-[900px]:gap-5">
+        <div className="absolute left-0 right-0 bottom-[190px] max-[900px]:bottom-[96px] z-3 flex justify-between items-end gap-10 px-[max(var(--gut),4vw)] max-[900px]:flex-col max-[900px]:items-stretch max-[900px]:gap-3.5 pointer-events-none">
           {/* Titles */}
-          <div className="relative flex-1 basis-[560px] min-w-0 h-[260px] max-[900px]:h-[240px]">
+          <div className="relative flex-1 basis-[560px] min-w-0 h-[260px] max-[900px]:flex-none max-[900px]:basis-auto max-[900px]:h-[175px] pointer-events-auto">
             {SLIDES.map((s, idx) => (
               <div
                 key={s.h}
-                className={`absolute left-0 right-0 bottom-0 flex flex-col gap-4.5 transition-all duration-1000 ease-[cubic-bezier(0.2,0.7,0.2,1)] ${
+                className={`absolute left-0 right-0 bottom-0 flex flex-col gap-3.5 max-[900px]:gap-2 transition-all duration-1000 ease-[cubic-bezier(0.2,0.7,0.2,1)] ${
                   idx === cur
                     ? "opacity-100 translate-y-0 pointer-events-auto"
                     : "opacity-0 translate-y-8 pointer-events-none"
                 }`}
               >
                 <span className="cap text-[12px] text-[var(--gold)]">{s.eb}</span>
-                <h1 className="disp text-[clamp(46px,6.4vw,104px)] max-[900px]:text-[40px] leading-[0.95] max-w-[12ch]">
+                <h1 className="disp text-[clamp(46px,6.4vw,104px)] max-[900px]:text-[34px] leading-[0.98] max-w-[13ch]">
                   {s.t}
                 </h1>
                 <Link
@@ -192,7 +196,7 @@ export function HeroSlider() {
           </div>
 
           {/* Hero Slider Controls */}
-          <div className="flex-none basis-[440px] min-w-0 flex flex-col gap-4 max-[900px]:w-full">
+          <div className="flex-none basis-[440px] min-w-0 flex flex-col gap-4 max-[900px]:flex-none max-[900px]:basis-auto max-[900px]:w-full pointer-events-auto">
             <div className="flex justify-between items-center gap-4 max-[900px]:hidden">
               <span className="disp text-[28px]">
                 {String(cur + 1).padStart(2, "0")}{" "}

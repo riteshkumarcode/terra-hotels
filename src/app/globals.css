@@ -281,6 +281,79 @@ section {
   animation: rise 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+/* Scrollbar hiding utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Horizontal slider rail */
+.rail {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 0 max(var(--gutR), 4vw) 8px max(var(--gut), 4vw);
+  scrollbar-width: none;
+  scroll-padding-left: max(var(--gut), 4vw);
+  -webkit-overflow-scrolling: touch;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.rail > * {
+  scroll-snap-align: start;
+  flex: none;
+}
+
+.dcard {
+  width: 340px;
+  max-width: 82vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.dcard .zoomwrap {
+  position: relative;
+  height: 460px;
+}
+.dcard .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.rcard {
+  width: 520px;
+  max-width: 86vw;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.rcard .zoomwrap {
+  position: relative;
+  height: 380px;
+}
+
+@media (max-width: 900px) {
+  .dcard .zoomwrap {
+    height: 380px;
+  }
+  .rcard .zoomwrap {
+    height: 240px;
+  }
+}
+
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -291,3 +364,4 @@ section {
     scroll-behavior: auto;
   }
 }
+

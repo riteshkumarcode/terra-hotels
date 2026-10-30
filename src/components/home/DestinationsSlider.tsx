@@ -74,13 +74,13 @@ export function DestinationsSlider() {
       {/* Horizontal Rail */}
       <div
         ref={railRef}
-        className="flex gap-6 overflow-x-auto scroll-smooth no-scrollbar snap-x snap-mandatory px-[max(var(--gut),4vw)] pb-2"
+        className="rail"
       >
         {SAMPLE_HOTELS.map((h) => (
           <Link
             key={h.id}
             href={`/hotels/${h.slug}`}
-            className="hov snap-start flex-none w-[340px] max-w-[82vw] flex flex-col gap-4 no-underline text-[var(--ink)]"
+            className="hov dcard"
           >
             <div className="zoomwrap relative h-[460px] max-[900px]:h-[380px]">
               <Image

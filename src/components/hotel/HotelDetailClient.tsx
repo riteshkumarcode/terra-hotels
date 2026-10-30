@@ -36,6 +36,7 @@ export function HotelDetailClient({ hotel }: { hotel: SampleHotel }) {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const totalGallery = hotel.images.length;
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   // Auto advance gallery every 7 seconds
   useEffect(() => {
@@ -51,15 +52,18 @@ export function HotelDetailClient({ hotel }: { hotel: SampleHotel }) {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const diff = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(diff) > 50) {
-      goGallery(galleryIndex + (diff < 0 ? 1 : -1));
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+      goGallery(galleryIndex + (diffX < 0 ? 1 : -1));
     }
     touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   const [isSaved, setIsSaved] = useState(false);
@@ -78,7 +82,7 @@ export function HotelDetailClient({ hotel }: { hotel: SampleHotel }) {
     <div className="pt-0 pb-16">
       {/* 1. Full Gallery Hero */}
       <section
-        className="relative h-[clamp(420px,72vh,760px)] overflow-hidden bg-[var(--forest)]"
+        className="relative h-[clamp(420px,72vh,760px)] overflow-hidden bg-[var(--forest)] touch-pan-y"
         aria-label="Photo gallery"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -86,7 +90,7 @@ export function HotelDetailClient({ hotel }: { hotel: SampleHotel }) {
         {hotel.images.map((img, idx) => (
           <div
             key={idx}
-            className={`absolute inset-0 transition-opacity duration-1200 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
               idx === galleryIndex ? "opacity-100 z-1" : "opacity-0 z-0 pointer-events-none"
             }`}
           >

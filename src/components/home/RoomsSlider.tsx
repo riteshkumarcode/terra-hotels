@@ -102,15 +102,15 @@ export function RoomsSlider() {
       {/* Horizontal Rooms Rail */}
       <div
         ref={railRef}
-        className="flex gap-6 overflow-x-auto scroll-smooth no-scrollbar snap-x snap-mandatory px-[max(var(--gut),4vw)] pb-2"
+        className="rail"
       >
         {ROOM_SLIDES.map((r, idx) => (
           <Link
             key={idx}
             href={`/hotels/${r.hotelSlug}`}
-            className="hov snap-start flex-none w-[520px] max-w-[86vw] flex flex-col gap-5 no-underline text-[var(--ink)]"
+            className="hov rcard"
           >
-            <div className="zoomwrap relative h-[380px] max-[900px]:h-[240px] w-full">
+            <div className="zoomwrap w-full">
               <Image
                 src={r.img}
                 alt={r.alt}
